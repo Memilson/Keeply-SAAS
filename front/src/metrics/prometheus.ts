@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
+import { apiUrl } from "../config";
 
 type MetricTags = {
   path?: string;
@@ -15,7 +15,7 @@ function postMetric(metric: string, value: number, tags: MetricTags = {}) {
     },
   });
 
-  const url = `${API_BASE_URL}/api/metrics/frontend`;
+  const url = apiUrl("/api/metrics/frontend");
 
   try {
     if (navigator.sendBeacon) {

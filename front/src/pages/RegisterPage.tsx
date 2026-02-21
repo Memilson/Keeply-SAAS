@@ -1,8 +1,7 @@
 import { useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import Navbar from "../components/Navbar";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
+import { apiUrl } from "../config";
 
 async function safeJson(res: Response): Promise<any> {
   const text = await res.text();
@@ -54,7 +53,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const res = await fetch(apiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
