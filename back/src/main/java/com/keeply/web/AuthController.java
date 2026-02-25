@@ -82,17 +82,17 @@ final class AuthService {
         var authInfoPayload = buildAuthInfoPayload(userId, normalized);
         try {
             authInfoGateway.upsertAuthInfo(authInfoPayload);
-            return Map.copyOf(signupResponse);
+            return copyMapAllowingNulls(signupResponse);
         } catch (UpstreamException e) {
             if (isTransientAuthInfoError(e)) {
                 var response = new LinkedHashMap<>(signupResponse);
                 response.put("auth_info_status", "pending");
                 response.put("auth_info_message", "Cadastro criado. Finalização do perfil em processamento.");
-                return Map.copyOf(response);}
+                return copyMapAllowingNulls(response);}
             throw e;}}
     public Map<String, Object> login(AuthController.LoginRequest req) {
         var email = normalizeEmail(req.email());
-        return Map.copyOf(supabaseAuthGateway.login(email, req.password()));}
+        return copyMapAllowingNulls(supabaseAuthGateway.login(email, req.password()));}
     private NormalizedRegister normalize(AuthController.RegisterRequest r) {
         var email = normalizeEmail(r.email());
         var fullName = (r.fullName() == null) ? "" : r.fullName().trim();
@@ -124,7 +124,9 @@ final class AuthService {
         payload.put("accepted_privacy_policy_at", r.acceptedPrivacyPolicy() ? now.toString() : null);
         payload.put("privacy_policy_version", r.acceptedPrivacyPolicy() ? legalVersions.privacyVersion() : null);
         payload.put("profile_completed", isProfileCompleted(r));
-        return Map.copyOf(payload);}
+        return copyMapAllowingNulls(payload);}
+    private static Map<String, Object> copyMapAllowingNulls(Map<String, Object> source) {
+        return new LinkedHashMap<>(source);}
     private static boolean isProfileCompleted(NormalizedRegister r) {
         return StringUtils.hasText(r.fullName())
                 && StringUtils.hasText(r.cpf())
@@ -179,7 +181,9 @@ final class SupabaseAuthGateway {
             return response;
         } catch (RestClientResponseException e) {
             var err = parseSupabaseAuthError(e);
-            throw new UpstreamException(err.status(), err.message());}}
+            throw new UpstreamException(err.status(), err.message());
+        } catch (ResourceAccessException e) {
+            throw new UpstreamException(502, "Falha de rede ao acessar Supabase Auth no cadastro.");}}
     Map<String, Object> login(String email, String password) {
         try {
             var payload = Map.of("email", email, "password", password);
@@ -195,7 +199,9 @@ final class SupabaseAuthGateway {
             return response;
         } catch (RestClientResponseException e) {
             var err = parseSupabaseAuthError(e);
-            throw new UpstreamException(err.status(), err.message());}}
+            throw new UpstreamException(err.status(), err.message());
+        } catch (ResourceAccessException e) {
+            throw new UpstreamException(502, "Falha de rede ao acessar Supabase Auth no login.");}}
     static String extractUserId(Map<String, Object> signupResponse) {
         var userObj = signupResponse.get("user");
         if (userObj instanceof Map<?, ?> userMap) {

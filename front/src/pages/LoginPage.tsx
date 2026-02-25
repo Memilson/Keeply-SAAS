@@ -60,7 +60,7 @@ export default function LoginPage() {
 
       setSuccessMsg("Login realizado com sucesso.");
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/dashboard";
       }, 700);
     } catch (err) {
       if (err instanceof TypeError) {
